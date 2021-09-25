@@ -38,28 +38,15 @@ static FCMPlugin *fcmPluginInstance;
     self.domainUriPrefix = [self.commandDelegate.settings objectForKey:[@"DYNAMIC_LINK_URIPREFIX" lowercaseString]];
     NSLog(@"FCM -> Dynamic Link: %@", self.domainUriPrefix);
     [self.commandDelegate runInBackground:^{
-        
+
         CDVPluginResult* pluginResult = nil;
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
 }
 
-// GET TOKEN //
-- (void) getToken:(CDVInvokedUrlCommand *)command 
-{
-    NSLog(@"FCM -> Get Token");
-    [self.commandDelegate runInBackground:^{
-        // NSString* token = [[FIRInstanceID instanceID] token];
-        NSString* token = [FIRMessaging messaging].FCMToken;
-        CDVPluginResult* pluginResult = nil;
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:token];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }];
-}
-
 // UN/SUBSCRIBE TOPIC //
-- (void) subscribeToTopic:(CDVInvokedUrlCommand *)command 
+- (void) subscribeToTopic:(CDVInvokedUrlCommand *)command
 {
     NSString* topic = [command.arguments objectAtIndex:0];
     NSLog(@"FCM -> subscribe To Topic %@", topic);
@@ -71,7 +58,7 @@ static FCMPlugin *fcmPluginInstance;
     }];
 }
 
-- (void) unsubscribeFromTopic:(CDVInvokedUrlCommand *)command 
+- (void) unsubscribeFromTopic:(CDVInvokedUrlCommand *)command
 {
     NSString* topic = [command.arguments objectAtIndex:0];
     NSLog(@"FCM -> unsubscribe From Topic %@", topic);
@@ -83,46 +70,6 @@ static FCMPlugin *fcmPluginInstance;
     }];
 }
 
-- (void) registerNotification:(CDVInvokedUrlCommand *)command
-{
-    NSLog(@"FCM -> view registered for notifications");
-    
-    notificatorReceptorReady = YES;
-    NSData* lastPush = [AppDelegate getLastPush];
-    if (lastPush != nil) {
-        [FCMPlugin.fcmPlugin notifyOfMessage:lastPush];
-    }
-    
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
-
--(void) notifyOfMessage:(NSData *)payload
-{
-    NSString *JSONString = [[NSString alloc] initWithBytes:[payload bytes] length:[payload length] encoding:NSUTF8StringEncoding];
-    NSString * notifyJS = [NSString stringWithFormat:@"%@(%@);", notificationCallback, JSONString];
-    NSLog(@"FCM -> stringByEvaluatingJavaScriptFromString %@", notifyJS);
-    
-    if ([self.webView respondsToSelector:@selector(stringByEvaluatingJavaScriptFromString:)]) {
-        [(UIWebView *)self.webView stringByEvaluatingJavaScriptFromString:notifyJS];
-    } else {
-        [self.webViewEngine evaluateJavaScript:notifyJS completionHandler:nil];
-    }
-}
-
--(void) notifyOfTokenRefresh:(NSString *)token
-{
-    NSString * notifyJS = [NSString stringWithFormat:@"%@('%@');", tokenRefreshCallback, token];
-    NSLog(@"FCM -> stringByEvaluatingJavaScriptFromString %@", notifyJS);
-    
-    if ([self.webView respondsToSelector:@selector(stringByEvaluatingJavaScriptFromString:)]) {
-        [(UIWebView *)self.webView stringByEvaluatingJavaScriptFromString:notifyJS];
-    } else {
-        [self.webViewEngine evaluateJavaScript:notifyJS completionHandler:nil];
-    }
-}
-
 -(void) appEnterBackground
 {
     NSLog(@"FCM -> Set state background");
@@ -132,10 +79,6 @@ static FCMPlugin *fcmPluginInstance;
 -(void) appEnterForeground
 {
     NSLog(@"FCM -> Set state foreground");
-    NSData* lastPush = [AppDelegate getLastPush];
-    if (lastPush != nil) {
-        [FCMPlugin.fcmPlugin notifyOfMessage:lastPush];
-    }
     appInForeground = YES;
 }
 
